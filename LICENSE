@@ -1,4 +1,12 @@
-MIT License
+# License
+
+This repository uses a dual license depending on file type.
+
+---
+
+## Code — MIT License
+
+Applies to: `scripts/build_passage_index.py`, `scripts/emptiness_graph.py`
 
 Copyright (c) 2026 Joy Bose
 
@@ -19,3 +27,66 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Graph Data — CC BY 4.0
+
+Applies to: `data/concepts.jsonl`, `data/edges.jsonl`, `data/corpus_manifest.jsonl`
+
+Copyright (c) 2026 Joy Bose
+
+These files are the original intellectual work of the author — hand-authored
+concept definitions, typed philosophical relations, and corpus metadata.
+They are licensed under the Creative Commons Attribution 4.0 International
+License (CC BY 4.0).
+
+You are free to share and adapt this material for any purpose, including
+commercial, provided you give appropriate credit:
+
+  Joy Bose, "Emptiness Graph", 2026,
+  https://github.com/joyboseroy/emptiness-graph
+
+Full license text: https://creativecommons.org/licenses/by/4.0/
+
+---
+
+## Passage Data — CC BY-NC 4.0
+
+Applies to: `data/passages.jsonl`, `data/passage_edges.jsonl`, `texts/`
+
+The passage corpus is derived from source translations with varying licenses:
+
+- **Public domain translations** (Anattalakkhana Sutta / Sujato, Milindapanha
+  / Rhys Davids, Diamond Sutra, Sunyatasaptati / Lindtner, Vimalakirti /
+  Thurman, Bodhicharyavatara / Padmakara, MMK / Geshe Kelsang Wangmo,
+  Heart Sutra): no restrictions on use.
+
+- **84000 translations** (Ashtasahasrika Prajnaparamita, Samdhinirmocana
+  Sutra): licensed CC BY-NC-ND 4.0 by 84000: Translating the Words of the
+  Buddha. These passages may not be used for commercial purposes or in
+  modified form without permission from 84000.
+  See: https://84000.co/terms-of-use
+
+Because the corpus as a whole includes 84000 material, the combined
+`passages.jsonl` and `passage_edges.jsonl` files are made available under
+**CC BY-NC 4.0** (non-commercial use, attribution required). If you use only
+passages from non-84000 sources, those passages carry no additional
+restrictions beyond their original public domain status.
+
+Full license text: https://creativecommons.org/licenses/by-nc/4.0/
+
+---
+
+## Summary
+
+| File(s) | License |
+|---------|---------|
+| `scripts/*.py` | MIT |
+| `data/concepts.jsonl` | CC BY 4.0 |
+| `data/edges.jsonl` | CC BY 4.0 |
+| `data/corpus_manifest.jsonl` | CC BY 4.0 |
+| `data/passages.jsonl` | CC BY-NC 4.0 |
+| `data/passage_edges.jsonl` | CC BY-NC 4.0 |
+| `texts/*.txt` | Mixed public domain / CC BY-NC-ND 4.0 (see above) |
+| `README.md` | CC BY 4.0 |
