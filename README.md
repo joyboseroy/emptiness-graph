@@ -278,6 +278,193 @@ grounded. Reserved for a future Dzogchen extension.
 
 ---
 
+## What This Graph Is Actually Good For
+
+Four concrete use cases, in order of how much work each requires.
+
+---
+
+### Use Case 1: Understanding Why a Sutra Is Structured the Way It Is
+
+**The problem:** Most readers experience the Heart Sutra's negation sequence
+("no eye, no ear, no nose...") as a mysterious or mystical list. They do not
+know what is being negated or why.
+
+**What the graph shows:** Every negation in the Heart Sutra targets a specific
+Abhidharma category. The sutra is not being mystical. It is systematically
+dismantling the Abhidharma's claim that certain dharmas possess inherent
+existence (svabhava). The graph makes this argument visible.
+
+```python
+# What does the Heart Sutra argue against?
+for u, v, data in G.edges(data=True):
+    if u == "heart_sutra":
+        target = G.nodes[v]["label"]
+        print(f"  {data['relation']}: {target}")
+        print(f"  notes: {data['notes'][:120]}")
+
+# Output:
+# deconstructs: Five Aggregates
+#   notes: The Heart Sutra applies sunyata to each aggregate in turn:
+#          'form is empty' — then implies the same for vedana, samjna...
+# refutes: Abhidharma Realism
+#   notes: The negation sequence (no eye, no ear...) dismantles the
+#          Abhidharma category system one doctrine at a time...
+```
+
+**Who this helps:** Anyone studying the Prajnaparamita sutras, students
+preparing for a course or retreat, teachers who want a structured way to
+explain the argumentative context.
+
+---
+
+### Use Case 2: Mapping How a Concept Travels Across Traditions
+
+**The problem:** The word "emptiness" means different things in different
+Buddhist traditions. A Theravada teacher and a Madhyamaka scholar are not
+saying the same thing when they use the word. Understanding the difference
+matters for practice and for scholarship.
+
+**What the graph shows:** Each tradition's relationship to sunyata is encoded
+as a distinct typed edge. You can see at a glance that Theravada treats anatta
+as a precursor to sunyata (not identical), Madhyamaka treats dependent
+origination as identical to sunyata, and Yogacara reframes sunyata using
+the three-natures framework — a different claim, not a synonym.
+
+```python
+# How does each tradition relate to sunyata?
+tradition_edges = {}
+for u, v, data in G.edges(data=True):
+    if "sunyata" in (u, v):
+        trad = data.get("tradition", "unknown")
+        if trad not in tradition_edges:
+            tradition_edges[trad] = []
+        other = v if u == "sunyata" else u
+        direction = "->" if u == "sunyata" else "<-"
+        tradition_edges[trad].append(
+            f"{G.nodes[u]['label']} {direction} {G.nodes[v]['label']} [{data['relation']}]"
+        )
+
+for trad, edges in sorted(tradition_edges.items()):
+    print(f"\n{trad.upper()}:")
+    for e in edges:
+        print(f"  {e}")
+```
+
+**Who this helps:** Scholars doing comparative Buddhist philosophy, practitioners
+who have encountered emptiness teachings in one tradition and want to understand
+how another tradition handles the same ground.
+
+---
+
+### Use Case 3: Graph-Constrained Passage Retrieval
+
+**The problem:** Standard RAG over Buddhist texts retrieves passages that
+mention a keyword. It has no way to distinguish between a passage that uses
+the word "emptiness" in passing and a passage that is making the central
+argument about emptiness.
+
+**What the graph adds:** You can use the concept graph to constrain and rank
+retrieval. First find which concepts are most central to a query (via graph
+traversal), then retrieve only passages linked to those specific concepts,
+then rank by the philosophical weight of the concept-passage edge.
+
+```python
+passages = load_jsonl("passages.jsonl")
+pedges   = load_jsonl("passage_edges.jsonl")
+
+def get_central_concepts(query_concept, hops=1):
+    """Get concepts within N hops that have high-weight edges."""
+    related = {query_concept}
+    simple = nx.DiGraph()
+    for u, v, data in G.edges(data=True):
+        if data.get("weight", 0) >= 0.8:
+            simple.add_edge(u, v)
+    for node in list(related):
+        related.update(nx.single_source_shortest_path_length(
+            simple, node, cutoff=hops).keys())
+    return related
+
+def retrieve_passages(query_concept, top_n=5):
+    """Get passages for a concept and its high-weight neighbours."""
+    concepts = get_central_concepts(query_concept)
+    pids = {e["source"] for e in pedges if e["target"] in concepts}
+    results = [p for p in passages if p["id"] in pids]
+    # rank by number of relevant concepts mentioned
+    results.sort(key=lambda p: len(
+        set(p["concepts_mentioned"]) & concepts), reverse=True)
+    return results[:top_n]
+
+for p in retrieve_passages("emptiness_of_emptiness"):
+    print(f"[{p['text_id']}]")
+    print(p["text"][:300])
+    print()
+```
+
+**Who this helps:** Anyone building a Buddhist study tool, dharma teacher
+assistant, or philosophical question-answering system who wants retrieval
+that respects the argumentative structure of the texts rather than keyword
+frequency.
+
+---
+
+### Use Case 4: Identifying What a Text Leaves Unresolved
+
+**The problem:** Buddhist traditions sometimes present their own position as
+the final word. The graph makes it possible to see which questions any given
+text or tradition leaves open — not as a critique, but as a map of where the
+philosophical work continues.
+
+**What the graph shows:** The `tensions_with` edges encode live disputes.
+You can query which concepts and texts are involved in unresolved tensions,
+and then pull the passages from each side of the dispute.
+
+```python
+# Find all live tensions and the passages relevant to each side
+for u, v, data in G.edges(data=True):
+    if data["relation"] == "tensions_with":
+        u_label = G.nodes[u]["label"]
+        v_label = G.nodes[v]["label"]
+        print(f"\nTENSION: {u_label} <--> {v_label}")
+        print(f"  {data['notes'][:200]}")
+
+        # passages from each side
+        u_pids = {e["source"] for e in pedges if e["target"] == u}
+        v_pids = {e["source"] for e in pedges if e["target"] == v}
+        u_passages = [p for p in passages if p["id"] in u_pids][:2]
+        v_passages = [p for p in passages if p["id"] in v_pids][:2]
+
+        print(f"\n  Passages asserting {u_label}:")
+        for p in u_passages:
+            print(f"    [{p['text_id']}] {p['text'][:120]}...")
+        print(f"\n  Passages asserting {v_label}:")
+        for p in v_passages:
+            print(f"    [{p['text_id']}] {p['text'][:120]}...")
+```
+
+**Who this helps:** Scholars writing comparative studies, students writing
+essays on inter-traditional debates, anyone building an LLM application that
+needs to present multiple Buddhist perspectives on a question rather than
+collapsing them into one answer.
+
+---
+
+### What the Graph Is Not Good For (Be Honest)
+
+- **Explaining emptiness experientially.** The graph maps the argumentative
+  structure. It cannot produce the recognition that the arguments point toward.
+  A meditation teacher is still required for that.
+- **Answering "what should I practice."** The graph has no soteriological
+  recommendations. Use a teacher.
+- **Replacing a commentary.** The `notes` field on each edge is a paragraph,
+  not a bhashya. Chandrakirti's Prasannapada commentary on the MMK is 400
+  pages. The graph is a scaffold, not a substitute.
+- **Handling texts not yet ingested.** If you query for passages from the
+  Vigrahavyavartani or Ratnavali, you will get nothing — those texts are in
+  `corpus_manifest.jsonl` as planned but their passages are not yet extracted.
+
+---
+
 ## How to Use It
 
 ### Load the philosophical graph
@@ -385,6 +572,196 @@ python emptiness_graph.py --viz
 from datasets import load_dataset
 ds = load_dataset("joyboseroy/emptiness-graph")
 ```
+
+---
+
+## Loading into FalkorDB and Cypher Queries
+
+FalkorDB is a Redis-based graph database that supports Cypher queries.
+Loading the graph there gives you a persistent, server-side graph with
+richer query capabilities than NetworkX — especially for multi-hop
+traversals, filtering by multiple properties, and pattern matching.
+
+### Prerequisites
+
+```bash
+# Start FalkorDB via Docker
+docker run -p 6379:6379 -it --rm falkordb/falkordb:latest
+
+# Install Python client
+pip install falkordb
+```
+
+### Load the graph into FalkorDB
+
+```python
+import json
+from falkordb import FalkorDB
+
+def load_jsonl(path):
+    return [json.loads(l) for l in open(path)
+            if l.strip() and not l.startswith('#')]
+
+# connect
+db = FalkorDB(host="localhost", port=6379)
+g  = db.select_graph("emptiness")
+
+# load concept nodes
+for c in load_jsonl("data/concepts.jsonl"):
+    label     = c["label"].replace("'", "\\'")
+    sanskrit  = c.get("sanskrit", "").replace("'", "\\'")
+    tradition = str(c.get("tradition", [])).replace("'", "\\'")
+    category  = c.get("category", "").replace("'", "\\'")
+    definition = c.get("definition", "")[:300].replace("'", "\\'")
+    g.query(
+        f"CREATE (:Concept {{id: '{c['id']}', label: '{label}', "
+        f"sanskrit: '{sanskrit}', tradition: '{tradition}', "
+        f"category: '{category}', definition: '{definition}'}})"
+    )
+
+# load text nodes
+for t in load_jsonl("data/corpus_manifest.jsonl"):
+    title     = t["title"].replace("'", "\\'")
+    tradition = t.get("tradition", "").replace("'", "\\'")
+    vehicle   = t.get("vehicle", "").replace("'", "\\'")
+    author    = str(t.get("author", "")).replace("'", "\\'")
+    g.query(
+        f"CREATE (:Text {{id: '{t['id']}', title: '{title}', "
+        f"tradition: '{tradition}', vehicle: '{vehicle}', "
+        f"author: '{author}'}})"
+    )
+
+# load passage nodes (optional — skip if only querying the concept graph)
+for p in load_jsonl("data/passages.jsonl"):
+    text = p["text"][:500].replace("'", "\\'").replace("\n", " ")
+    g.query(
+        f"CREATE (:Passage {{id: '{p['id']}', text_id: '{p['text_id']}', "
+        f"text: '{text}'}})"
+    )
+
+# load philosophical edges
+for e in load_jsonl("data/edges.jsonl"):
+    relation  = e["relation"].upper()
+    tradition = e.get("tradition", "").replace("'", "\\'")
+    weight    = e.get("weight", 0.5)
+    notes     = e.get("notes", "")[:200].replace("'", "\\'")
+    g.query(
+        f"MATCH (a {{id: '{e['source']}'}}) "
+        f"MATCH (b {{id: '{e['target']}'}}) "
+        f"CREATE (a)-[:{relation} {{tradition: '{tradition}', "
+        f"weight: {weight}, notes: '{notes}'}}]->(b)"
+    )
+
+# load passage-concept edges
+for pe in load_jsonl("data/passage_edges.jsonl"):
+    g.query(
+        f"MATCH (p:Passage {{id: '{pe['source']}'}}) "
+        f"MATCH (c:Concept {{id: '{pe['target']}'}}) "
+        f"CREATE (p)-[:MENTIONS]->(c)"
+    )
+
+print("Graph loaded.")
+result = g.query("MATCH (n) RETURN count(n) AS nodes")
+print(f"Total nodes: {result.result_set[0][0]}")
+```
+
+### Cypher Queries
+
+**What does the Heart Sutra refute or deconstruct?**
+```cypher
+MATCH (:Text {id: 'heart_sutra'})-[r]->(c:Concept)
+WHERE r.relation IN ['REFUTES', 'DECONSTRUCTS']
+RETURN c.label, type(r)
+```
+
+**What are all paths from anatta to sunyata?**
+```cypher
+MATCH path = (:Concept {id: 'anatta'})-[*1..3]->(:Concept {id: 'sunyata'})
+RETURN path
+```
+
+**All concepts that Madhyamaka tradition asserts about sunyata,
+ordered by weight:**
+```cypher
+MATCH (a)-[r]->(b:Concept {id: 'sunyata'})
+WHERE r.tradition = 'madhyamaka'
+RETURN a.label, type(r), r.weight
+ORDER BY r.weight DESC
+```
+
+**Find all doctrinal tensions and their notes:**
+```cypher
+MATCH (a)-[r:TENSIONS_WITH]->(b)
+RETURN a.label, b.label, r.notes
+```
+
+**Which concepts does each tradition own most edges on?**
+```cypher
+MATCH (a)-[r]->(b)
+WHERE r.tradition <> ''
+RETURN r.tradition, count(r) AS edge_count
+ORDER BY edge_count DESC
+```
+
+**What concepts are reachable from abhidharma_realism
+within 2 hops, and via what relations?**
+```cypher
+MATCH (start:Concept {id: 'abhidharma_realism'})-[r*1..2]->(end:Concept)
+RETURN start.label,
+       [rel in r | type(rel)] AS relations,
+       end.label
+```
+
+**Find all passages that mention both svabhava and sunyata
+(passages where the two concepts appear together):**
+```cypher
+MATCH (p:Passage)-[:MENTIONS]->(c1:Concept {id: 'svabhava'}),
+      (p)-[:MENTIONS]->(c2:Concept {id: 'sunyata'})
+RETURN p.text_id, p.text
+LIMIT 10
+```
+
+**Which source texts contribute passages for the most concepts?**
+```cypher
+MATCH (p:Passage)-[:MENTIONS]->(c:Concept)
+RETURN p.text_id, count(DISTINCT c.id) AS concepts_covered
+ORDER BY concepts_covered DESC
+```
+
+**What is the neighbourhood of pratityasamutpada —
+everything one hop away and the relation types?**
+```cypher
+MATCH (n:Concept {id: 'pratityasamutpada'})-[r]-(neighbour)
+RETURN neighbour.label, type(r), r.tradition, r.weight
+ORDER BY r.weight DESC
+```
+
+**Find concepts that sit between two traditions —
+connected to edges from both madhyamaka and yogacara:**
+```cypher
+MATCH (a)-[r1]->(c:Concept)<-[r2]-(b)
+WHERE r1.tradition = 'madhyamaka'
+  AND r2.tradition = 'yogacara'
+RETURN DISTINCT c.label, c.definition
+```
+
+### Why Cypher over NetworkX for This Graph
+
+NetworkX works well for small traversals in a notebook. FalkorDB + Cypher
+is better when you want to:
+
+- **Filter on multiple edge properties at once** — tradition, weight, and
+  relation type in a single query without nested Python loops
+- **Do multi-hop pattern matching** — "find all concepts reachable from X
+  via high-weight edges within 3 hops" is one Cypher line, not 15 lines
+  of Python
+- **Join passage and concept queries** — finding passages that mention
+  a specific combination of concepts requires a graph JOIN that Cypher
+  handles natively
+- **Persist and share** — FalkorDB runs as a server; multiple people or
+  processes can query the same loaded graph simultaneously
+- **Build a backend** — if you want to serve queries from a web application
+  or API, FalkorDB is the right layer; NetworkX is in-process only
 
 ---
 
