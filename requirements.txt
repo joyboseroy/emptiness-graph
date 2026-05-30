@@ -1,0 +1,11 @@
+# Core graph library
+networkx>=3.0
+
+# Optional: visualisation
+pyvis>=0.3.0
+
+# Optional: load from HuggingFace
+datasets>=2.0.0
+
+# Optional: load into FalkorDB
+falkordb>=1.0.0
