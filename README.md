@@ -3,7 +3,11 @@
 **A typed philosophical knowledge graph of Buddhist emptiness teachings**  
 spanning Theravada, Prajnaparamita, Madhyamaka, and Yogacara
 
-`joyboseroy/emptiness-graph` · GitHub | HuggingFace Dataset
+[![HuggingFace](https://img.shields.io/badge/🤗%20HuggingFace-Dataset-yellow)](https://huggingface.co/datasets/joyboseroy/emptiness-graph)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](LICENSE.md)
+
+**Dataset:** [huggingface.co/datasets/joyboseroy/emptiness-graph](https://huggingface.co/datasets/joyboseroy/emptiness-graph)
 
 ---
 
