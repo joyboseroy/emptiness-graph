@@ -798,7 +798,19 @@ Mahayana    : Bodhichitta       [enables]
 ```
 
 ---
+## Theravada vs Mahayana: a structured, hand-authored comparison
 
+Unlike a school-vs-school propositional disagreement, this graph models the Theravada-to-Mahayana relationship as primarily developmental rather than contradictory, even where the two traditions reach opposite conclusions. Three explicit contrast points:
+
+**Scope of no-self.** Theravada's anatta (`theravada_scope: person_only`) denies a permanent self in persons; Mahayana (`mahayana_scope: persons_and_dharmas`) extends the identical argument to all phenomena. The graph records this as a precursor relationship (anatta IS_PRECURSOR_OF sunyata; anatta_of_persons IS_PRECURSOR_OF anatta_of_dharmas), the seed-and-fruit framing of one tradition's analytic method becoming the starting point for the other's larger claim, not two unrelated positions that happen to differ.
+
+**The Abhidharma realism dispute.** Theravada Abhidharma asserts dhammas possess svabhava (own-nature) at the ultimate level even after persons are shown to lack a self (`theravada_position: denied` on anatta_of_dharmas, meaning Theravada denies dharma-selflessness specifically); Mahayana asserts dharma-selflessness directly (`mahayana_position: asserted`), with the Heart Sutra explicitly cited as deconstructing the five aggregates on this exact point. This is the one genuine point-for-point contradiction in the comparison, not merely a different emphasis.
+
+**Two truths.** Theravada's two-truths framework (conventional truth versus ultimate truth, where ultimate-level dhammas retain real own-nature) and Mahayana's two-truths framework (where even the ultimate is empty of svabhava) are modeled as two distinct concept nodes rather than one concept with two school labels, connected by an explicit edge: two_truths_theravada IS_PRECURSOR_OF two_truths. The graph treats Mahayana's framework as a direct development of Theravada's rather than an independent alternative.
+
+Across all three points, the pattern is consistent: Mahayana's positions are modeled as extensions or developments of Theravada's analytical method applied more broadly, rather than as a separate tradition reaching unrelated conclusions. We think this developmental framing, available because relations like is_precursor_of exist in this graph's vocabulary, captures something that a purely propositional same/different/causes vocabulary (the kind used in constrained LLM-extraction graphs, including Darshana Graph's) cannot represent: not just that two schools disagree, but that one school's position is best understood as the logical continuation of the other's, even when the literal conclusions differ.
+
+---
 ## What Is Not Included
 
 **Longchenpa / Dzogchen** — The Choying Dzod and Trilogy of Rest require
@@ -830,6 +842,7 @@ and their direct translations.
 }
 ```
 
+---
 ## A comparison point: how this differs from LLM-extracted philosophical graphs
 
 A separate project, Darshana Graph (github.com/joyboseroy/darshana-graph), builds a comparably-scaled philosophical knowledge graph for Hindu and Jain traditions using a constrained large language model pipeline rather than hand authorship. Comparing the two highlights what each approach is and isn't suited for.
