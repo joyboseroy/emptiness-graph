@@ -830,6 +830,14 @@ and their direct translations.
 }
 ```
 
+## A comparison point: how this differs from LLM-extracted philosophical graphs
+
+A separate project, Darshana Graph (github.com/joyboseroy/darshana-graph), builds a comparably-scaled philosophical knowledge graph for Hindu and Jain traditions using a constrained large language model pipeline rather than hand authorship. Comparing the two highlights what each approach is and isn't suited for.
+
+This graph's relation vocabulary (17 types: is_identical_to, negates, refutes, deconstructs, is_precursor_of, presupposes, and others) splits roughly evenly between propositional relations (what something is or is not) and argumentative or developmental relations (how one teaching responds to, refutes, or grows out of another). Darshana Graph's LLM-constrained vocabulary, by contrast, is entirely propositional (identity, distinctness, causation, qualified aspect); it has no equivalent to refutes, deconstructs, or is_precursor_of. The edge connecting Theravada's anatta to Mahayana's sunyata in this graph (e005: anatta IS_PRECURSOR_OF sunyata, "anatta is the seed; sunyata of dharmas is the fruit") is a representative example: it encodes a doctrinal-development claim that a closed propositional vocabulary cannot represent at all, regardless of extraction quality.
+
+We checked directly whether Darshana Graph's LLM-extracted edges could corroborate or contradict any claim in this graph for overlapping concepts (Theravada material appears in both). At time of writing, Darshana Graph's tagged output assigns zero edges a specific Theravada school attribution, all Buddhist-sourced edges in that graph default to a general label, so no edge-level comparison is currently possible; this is a known, documented limitation of that project, not a feature of this one. We note this not to claim superiority of hand authorship over LLM extraction in general, but to record a concrete, present-day illustration of a real tradeoff: hand authorship captures argumentative structure and scales slowly; constrained LLM extraction scales fast and captures propositional structure, at least with the current pipeline design, but not (yet) the dialectical moves that drive most actual philosophical argument.
+
 ---
 
 ## License
